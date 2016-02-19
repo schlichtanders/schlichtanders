@@ -119,7 +119,7 @@ class Structure(Sequence):
     def _lift_keys(_dict):
         return defaultdict(
             list,
-            { k: ['lifted'] for k, v in _dict.iteritems() }
+            { k: ['lifted'] for k in _dict.iterkeys() }
         )
                     
     def map(self, func):
