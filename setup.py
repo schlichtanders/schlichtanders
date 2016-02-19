@@ -42,7 +42,8 @@ setup(
     author_email='Stephan.Sahm@gmx.de',
     license='open source',
     packages=['schlichtanders'],
-    install_requires=['numpy >= 1.10.2',
-                      'matplotlib >= 1.3.1'],
+    # parts will break in pypy, however what can run hopefully runs
+    # install_requires=['numpy >= 1.10.2',
+    #                   'matplotlib >= 1.3.1'],
     cmdclass={'clean': CleanCmd}
     )
