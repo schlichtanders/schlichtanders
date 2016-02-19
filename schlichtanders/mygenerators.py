@@ -1,4 +1,3 @@
-import pylab as pl
 import itertools as it
 from itertools import izip
 import operator
