@@ -4,7 +4,7 @@ __author__ = 'Stephan Sahm <Stephan.Sahm@gmx.de>'
 
 import os
 import shutil
-from setuptools import setup
+from setuptools import setup, find_packages
 from distutils.command.clean import clean as Clean
 
 class CleanCmd(Clean):
@@ -42,7 +42,6 @@ setup(
     author_email='Stephan.Sahm@gmx.de',
     license='open source',
     packages=['schlichtanders'],
-    zip_safe=False,
     install_requires=['numpy >= 1.10.2',
                       'matplotlib >= 1.3.1'],
     cmdclass={'clean': CleanCmd}

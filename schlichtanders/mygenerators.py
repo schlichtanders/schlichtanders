@@ -1,6 +1,7 @@
 import pylab as pl
 import itertools as it
 from itertools import izip
+import operator
 import operator as op
 from timeit import default_timer
 
