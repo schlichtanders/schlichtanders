@@ -89,6 +89,12 @@ class Structure(Sequence):
 
     # Logic
     # -----
+
+    def clear(self):
+        self._list = []
+        self._dict = defaultdict(list)
+        self.pseudo = False
+        self.liftedkeys = False
     
     def set_name(self, name):
         self.group(pseudo=True, liftkeys=True)
