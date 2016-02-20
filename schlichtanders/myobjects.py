@@ -2,6 +2,7 @@ from collections import Sequence
 from mywrappers import defaultdict
 from mygenerators import deleteallbutone
 from copy import copy, deepcopy
+from itertools import islice
 
 class Count(object):
     """ future-like counting object
@@ -170,7 +171,9 @@ class Structure(Sequence):
     def __getitem__(self, index):
         """ depending on index it gives list entry (for integeres) or dictionary entries (for names) """
         if isinstance(index, int):
-            return list(iter(self))[index]  #TODO extremely inefficient! (but won't be really needed neither)
+            return next(islice(self, index, None))  #TODO relatively inefficient I think! (but won't be really needed neither)
+        if isinstance(index, slice):
+            return list(islice(self, index.start, index.stop, index.step))
         else:
             return list(self._dictitem_gen(index))
     
@@ -222,10 +225,7 @@ class Structure(Sequence):
             
     def __str__(self):
         strs = [str(i) for i in self]
-        if len(strs) == 1:
-            return strs[0]
-        else:
-            return "[" + ",".join(strs)+ "]"
+        return "[" + ",".join(strs)+ "]"
     
     def __repr__(self):
         public_attr = {attr:getattr(self, attr)
