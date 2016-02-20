@@ -1,8 +1,12 @@
 from collections import Sequence
 from mywrappers import defaultdict
 from mygenerators import deleteallbutone
-from copy import copy, deepcopy
+from copy import copy
 from itertools import islice
+import cPickle
+
+def deepcopy(o):
+    return cPickle.loads(cPickle.dumps(o, -1))
 
 class Count(object):
     """ future-like counting object
@@ -161,6 +165,9 @@ class Structure(Sequence):
         
     def iter_leaves(self):
         """ go through all leaves, mainly used for map """
+        # TODO next biggest speed bottleneck, but still a factor of 20 after cPickling
+        # maybe check whether one can cythonize this method, but code already seems rather easy
+        # as of today, cython is not able to handle `yield`
         for s in self._list:
             if isinstance(s, Leaf):
                 yield s
@@ -202,6 +209,7 @@ class Structure(Sequence):
         return self._dict.keys()
         
     def __add__(self, other):
+        """ this copies `self` before adding up with `other` """
         base = deepcopy(self)
         base += other # (+=) == __iadd__
         return base
@@ -235,12 +243,3 @@ class Structure(Sequence):
             return "(%s, %s, %s)"%(repr(self._list), repr(self._dict), repr(public_attr))
         else:
             return "(%s, %s,)"%(repr(self._list), repr(self._dict))
-        
-
-def recursive_structure_delift(structure, base_class=Structure):
-    """ more complex delift for structure types, as the structure type itself is usually nested """
-    structure.__class__ = base_class
-    for s in structure.iter_nopseudo():
-        if isinstance(s, Structure):
-            recursive_structure_delift(s, base_class)
-    return structure
