@@ -36,7 +36,7 @@ class CleanCmd(Clean):
 
 setup(
     name='schlichtanders',
-    version='0.1',
+    version='0.1.0',
     description='Personal collection of helper methods by schlichtanders',
     author=__author__,
     author_email='Stephan.Sahm@gmx.de',
