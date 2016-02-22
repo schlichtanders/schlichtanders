@@ -243,7 +243,7 @@ class Structure(object):
                 self._dict.get(key, []) + otherdict_transf
             ))
 
-        self._substructs_list += other._substructs_list
+        self._substructs_list += deepcopy(other._substructs_list) # copy to be save
         # liftedkeys / pseudo are set if the structure is grouped.
         # Top-Level Structures are by default non-pseudo, which makes sense, and also do not have to lift keys
         # self.pseudo &= other.pseudo
