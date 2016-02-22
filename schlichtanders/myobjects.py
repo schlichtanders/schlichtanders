@@ -97,15 +97,6 @@ class Structure(Sequence):
         self.pseudo = False # for better recursive iteration, this indicates that the top-level should be flattened by default
         self.liftedkeys = False
 
-    def dumps(self, dumps=lambda s: cPickle.dumps(s, -1)):
-        return dumps(self.__dict__)
-
-    @staticmethod
-    def loads(struct_dumped, loads=cPickle.loads):
-        s = Structure.__new__(Structure)
-        s.__dict__ = loads(struct_dumped)
-        return s
-
     # Logic
     # -----
 
@@ -158,7 +149,7 @@ class Structure(Sequence):
     def __iter__(self):
         """ flattens out pseudo structures as well as leaves
         final generator interface for user """
-        for s in self.iter_nopseudo():
+        for s in self.iter_withpseudo():
             # isinstance check is needed as also final leaf-values get yielded
             if isinstance(s, Structure) and s.pseudo:
                 for s2 in s: # yield from in python 3.x, calls __iter__
@@ -166,7 +157,7 @@ class Structure(Sequence):
             else:
                 yield s
 
-    def iter_nopseudo(self):
+    def iter_withpseudo(self):
         """ go through structure, regarding pseudogroups as normal groups,
         but flattening leaves (and possible sub-structures there) """
         for s in self._list:
@@ -207,7 +198,7 @@ class Structure(Sequence):
                     # this key "lifted" ensures that sublevel is still build from structures
                     # at least I hope so =), so no direct values, but Structure
                     # Nope it does not, because of pseudo structures
-                    for s in self.iter_nopseudo():
+                    for s in self.iter_withpseudo():
                         if hasattr(s, "liftedkeys") and s.liftedkeys:
                             # yield from in python 3.x:
                             for i in s._dictitem_gen(index):
@@ -267,7 +258,7 @@ class FastStructure(object):
 
 
     FLATTEN_LISTS = True
-    EMPTY_DEFAULT = None
+    EMPTY_DEFAULT = "EMPTY"
     LeafError = TypeError, KeyError
 
     # Construction
@@ -276,20 +267,23 @@ class FastStructure(object):
     def __init__(self, initializer=None, _list=None, _dict=None):
         """either initializer or non-empty list is needed"""
         # _list is still there for interface compatibility with the standard Structure implementation
-        self._substructs_list = (_list                 if _list is not None else
-                      [Leaf(initializer)]   if initializer is not None else
-                      []) # later list of sub-Structures
-        self._dict = _dict if _dict is not None else defaultdict(list)
+        self._substructs_list = (
+            _list          if _list is not None else
+            [initializer]  if initializer is not None else
+            []
+        ) # later list of sub-Structures
+        self._dict = _dict if _dict is not None else {}
         self.pseudo = False # for better recursive iteration, this indicates that the top-level should be flattened by default
         self.liftedkeys = False
 
-    def dumps(self, dumps=lambda s: cPickle.dumps(s, -1)):
-        return dumps(self.__dict__)
-
     @staticmethod
-    def loads(struct_dumped, loads=cPickle.loads):
+    def classify(struct):
+        """ wrappes struct into FastStructure class
+        :param struct: __dict__ of FastStructure
+        :return: FastStructure instance
+        """
         s = FastStructure.__new__(FastStructure)
-        s.__dict__ = loads(struct_dumped)
+        s.__dict__ = struct
         return s
 
     # Logic
@@ -297,13 +291,13 @@ class FastStructure(object):
 
     def clear(self):
         self._substructs_list= []
-        self._dict = defaultdict(list)
+        self._dict = {}
         self.pseudo = False
         self.liftedkeys = False
 
     def set_name(self, name):
         self.group(pseudo=True, liftkeys=True)
-        self._extend_dict({name: [self._substructs_list[0]]})
+        self._dict[name] = self._dict.get(name, []) + [0] # do everything by index, for faster serialization
         return self
 
     def group(self, wrapper=lambda x:x, pseudo=False, liftkeys=False):
@@ -316,7 +310,7 @@ class FastStructure(object):
         self.__dict__ = {} # set new dict
         FastStructure.__init__(self,
             _list = [wrapper(sub)],
-            _dict = self._lift_keys(cp._dict) if liftkeys else {}
+            _dict = self._lift_keys(sub['_dict']) if liftkeys else {}
         )
         return self
 
@@ -330,9 +324,16 @@ class FastStructure(object):
         CAUTION:everything is inplace,
         deepcopy before if you want to have a new object"""
         self._map(self.__dict__, func)
+        return self
 
     @staticmethod
     def _map(struct, func):
+        """ works in place
+        :param struct: FastStructure.__dict__
+        :param func: to be mapped over leafs
+        :return: references to struct
+        """
+        # TODO biggest bottleneck, and further this does not use yields.. thus could be improved with cython
         # the very top level is supposed to be called by FastStructure.map, i.e. be a true structure dict
         for i, s in enumerate(struct['_substructs_list']):
             try:
@@ -342,6 +343,7 @@ class FastStructure(object):
                 # assuming that the leafs don't have a '_substructs_list'
                 # (the rather long name was chosen for this very reason)
                 struct['_substructs_list'][i] = func(struct['_substructs_list'][i])
+        return struct # just for convenience
 
 
     # general interface methods:
@@ -349,11 +351,10 @@ class FastStructure(object):
 
     def __iter__(self):
         for s in self.iter_flatpseudo(self.__dict__):
-            if hasattr(s, '_substructs_list'):
-                t = FastStructure.__new__(FastStructure)
-                t.__dict__ = s
-                yield t
-            else: # leaf
+            try:
+                s['_substructs_list'] # TODO this seems so far the easiest and securest check whether we a substructure
+                yield FastStructure.classify(s)
+            except FastStructure.LeafError: # leaf
                 yield s
 
     @staticmethod
@@ -409,23 +410,23 @@ class FastStructure(object):
         """ checks for 'lifted' keys and in case flattens out all results """
         # first call can be assumed to work on structure dict
         if index in struct['_dict']: # "_dict" is a standard dictionary, thus iterating over it is the same as iterating over the keys
-            for elem in struct['_dict'][index]: # it is always a list
-                if elem == 'lifted':
+            for idx in struct['_dict'][index]: # it is always a list
+                if idx == 'lifted':
                     # recursive case
                     for s in FastStructure.iter_withpseudo(struct):
                         try:
                             if s['liftedkeys']:
-                                for i in FastStructure._dictitem_gen(s, index): # yield from in python 3.x:
-                                    yield i
+                                for elem in FastStructure._dictitem_gen(s, index): # yield from in python 3.x:
+                                    yield elem
                         except (TypeError, KeyError):
                             pass
                 else:
                     # base case
-                    if hasattr(s, '_substructs_list'): # if is struct object
-                        t = FastStructure.__new__(FastStructure)
-                        t.__dict__ = elem
-                        yield t
-                    else: # leaf
+                    elem = struct['_substructs_list'][idx]
+                    try:
+                        elem['_substructs_list'] # TODO this seems so far the easiest and securest check whether we have a substructure
+                        yield FastStructure.classify(elem)
+                    except FastStructure.LeafError: # leaf
                         yield elem
 
     def __len__(self):
@@ -442,26 +443,34 @@ class FastStructure(object):
         return base
 
     def __iadd__(self, other):
-        if not isinstance(other, Structure):
-            raise NotImplemented
+        if not isinstance(other, FastStructure):
+            raise NotImplementedError("cannot iadd type %s" % type(other))
+
+        otherdict_offset = len(self._substructs_list) # importantly, this is the old _substructs_list
+
+        for key in other._dict:
+            otherdict_transf = [x + otherdict_offset if x != 'lifted' else x  for x in other._dict[key]]
+            self._dict[key] = list(deleteallbutone('lifted',
+                self._dict.get(key, []) + otherdict_transf
+            ))
+
         self._substructs_list += other._substructs_list
-        self._extend_dict(other._dict)
+        # liftedkeys / pseudo are set if the structure is grouped.
+        # Top-Level Structures are by default non-pseudo, which makes sense, and also do not have to lift keys
+        # self.pseudo &= other.pseudo
+        # self.liftedkeys |= other.liftedkeys
         return self
 
-    def _extend_dict(self, other_dict):
-        """ extends self._dict by other_dict however keeps only one 'lifted' entry"""
-        for key in other_dict:
-            self._dict[key] = list(deleteallbutone('lifted',
-                self._dict.get(key, []) + other_dict[key]
-            ))
 
     @staticmethod
     def _str_struct(struct):
         try:
-            return "[%s]" % ",".join(
-                FastStructure._str_struct(s)
-                for s in FastStructure.iter_flatpseudo(struct)
-            )
+            subs = [FastStructure._str_struct(s) for s in FastStructure.iter_flatpseudo(struct)]
+            strsubs = ",".join(subs)
+            if len(subs) == 1 and struct['pseudo']:
+                return strsubs
+            else:
+                return "[%s]" % strsubs
         except FastStructure.LeafError:
             # this hopefuly is a leaf content
             return str(struct)
