@@ -55,7 +55,7 @@ class Structure(object):
 
     def __init__(self, initializer=None, _list=None, _dict=None):
         """either initializer or non-empty list is needed"""
-        # _list is still there for interface compatibility with the standard Structure implementation
+        # list is still there for interface compatibility with the standard Structure implementation
         self._substructs_list = (
             _list          if _list is not None else
             [initializer]  if initializer is not None else
@@ -99,7 +99,7 @@ class Structure(object):
         self.__dict__ = {} # set new dict
         Structure.__init__(self,
                            _list = [wrapper(sub)],
-                           _dict = self._lift_keys(sub['_dict']) if liftkeys else {}
+                           _dict = self._lift_keys(sub['dict']) if liftkeys else {}
                            )
         return self
 
@@ -124,14 +124,14 @@ class Structure(object):
         """
         # TODO biggest bottleneck, and further this does not use yields.. thus could be improved with cython
         # the very top level is supposed to be called by FastStructure.map, i.e. be a true structure dict
-        for i, s in enumerate(struct['_substructs_list']):
+        for i, s in enumerate(struct['list']):
             try:
                 Structure._map(s, func)
             except Structure.LeafError:
                 # this happens exactly then, if s is not a structure
-                # assuming that the leafs don't have a '_substructs_list'
+                # assuming that the leafs don't have a 'list'
                 # (the rather long name was chosen for this very reason)
-                struct['_substructs_list'][i] = func(struct['_substructs_list'][i])
+                struct['list'][i] = func(struct['list'][i])
         return struct # just for convenience
 
 
@@ -141,7 +141,7 @@ class Structure(object):
     def __iter__(self):
         for s in self.iter_flatpseudo(self.__dict__):
             try:
-                s['_substructs_list'] # TODO this seems so far the easiest and securest check whether we a substructure
+                s['list'] # TODO this seems so far the easiest and securest check whether we a substructure
                 yield Structure.classify(s)
             except Structure.LeafError: # leaf
                 yield s
@@ -162,7 +162,7 @@ class Structure(object):
                     # there is no harm, as we do the same if the key is not available
                     yield s
             except Structure.LeafError:
-                # gets thrown both if 'pseudo' or '_substructs_list' is not available
+                # gets thrown both if 'pseudo' or 'list' is not available
                 # (the latter is asked for within `FastStructure.iter_withpseudo`),
                 # i.e. we have a leaf content which was not flattend out by default (i.e. e.g. no list)
                 yield s
@@ -171,7 +171,7 @@ class Structure(object):
     def iter_withpseudo(struct):
         """ go through structure, regarding pseudogroups as normal groups,
         but flattening leaves """
-        for s in struct['_substructs_list']:
+        for s in struct['list']:
             if Structure.FLATTEN_LISTS and isinstance(s, list): # this would be a leaf, as structures are represented by dicts
                 if not s: # empty list is default EMPTY value
                     yield Structure.EMPTY_DEFAULT
@@ -198,8 +198,8 @@ class Structure(object):
     def _dictitem_gen(struct, index):
         """ checks for 'lifted' keys and in case flattens out all results """
         # first call can be assumed to work on structure dict
-        if index in struct['_dict']: # "_dict" is a standard dictionary, thus iterating over it is the same as iterating over the keys
-            for idx in struct['_dict'][index]: # it is always a list
+        if index in struct['dict']: # "dict" is a standard dictionary, thus iterating over it is the same as iterating over the keys
+            for idx in struct['dict'][index]: # it is always a list
                 if idx == 'lifted':
                     # recursive case
                     for s in Structure.iter_withpseudo(struct):
@@ -211,9 +211,9 @@ class Structure(object):
                             pass
                 else:
                     # base case
-                    elem = struct['_substructs_list'][idx]
+                    elem = struct['list'][idx]
                     try:
-                        elem['_substructs_list'] # TODO this seems so far the easiest and securest check whether we have a substructure
+                        elem['list'] # TODO this seems so far the easiest and securest check whether we have a substructure
                         yield Structure.classify(elem)
                     except Structure.LeafError: # leaf
                         yield elem
@@ -235,7 +235,7 @@ class Structure(object):
         if not isinstance(other, Structure):
             raise NotImplementedError("cannot iadd type %s" % type(other))
 
-        otherdict_offset = len(self._substructs_list) # importantly, this is the old _substructs_list
+        otherdict_offset = len(self._substructs_list) # importantly, this is the old list
 
         for key in other._dict:
             otherdict_transf = [x + otherdict_offset if x != 'lifted' else x  for x in other._dict[key]]
@@ -268,9 +268,9 @@ class Structure(object):
     def _repr_struct(struct):
         # [] are for pretty printing, semantically it is rather a ()
         try:
-            return "{'_list' : %s, '_dict' : %s, 'pseudo' : %s, 'liftedkeys' : %s}" % (
+            return "{'list' : %s, 'dict' : %s, 'pseudo' : %s, 'liftedkeys' : %s}" % (
                 "[%s]" % ",".join(Structure._repr_struct(s) for s in Structure.iter_withpseudo(struct)),
-                repr(struct['_dict']),
+                repr(struct['dict']),
                 struct['pseudo'],
                 struct['liftedkeys']
             )
