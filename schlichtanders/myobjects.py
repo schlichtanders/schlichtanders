@@ -4,83 +4,86 @@ from mygenerators import deleteallbutone
 from itertools import islice
 import cPickle
 import weakref
+import sys
 
 from copy import deepcopy
 def pickle_deepcopy(o):
     return cPickle.loads(cPickle.dumps(o, -1))
 
 class Count(object):
-    """ future-like counting object
+        """ future-like counting object
 
-    The first time the attribute ``value`` is accessed, it gets computed by counting onwards from the total_count
-    """
+        The first time the attribute ``value`` is accessed, it gets computed by counting onwards from the total_count
+        """
 
-    # CLASS
-    # -----
+        # CLASS
+        # -----
 
-    total_count = 0
-    weakrefs = []
+        total_count = 0
+        weakrefs = []
 
-    @staticmethod
-    def reset(total_count=0):
-        Count.total_count = total_count
+        @staticmethod
+        def reset(total_count=0):
+            Count.total_count = total_count
 
-    @staticmethod
-    def reset_all(total_count=0):
-        Count.total_count = total_count
-        weakrefs_still_alive = []
-        for ref in Count.weakrefs:
-            o = ref()
-            if o is not None:
-                weakrefs_still_alive.append(ref)
-                o._value = None
-        Count.weakrefs = weakrefs_still_alive
+        @staticmethod
+        def reset_all(total_count=0):
+            Count.total_count = total_count
+            weakrefs_still_alive = []
+            for ref in Count.weakrefs:
+                o = ref()
+                if o is not None:
+                    weakrefs_still_alive.append(ref)
+                    o._value = None
+            Count.weakrefs = weakrefs_still_alive
 
-    @staticmethod
-    def eval_all():
-        weakrefs_still_alive = []
-        for ref in Count.weakrefs:
-            o = ref()
-            if o is not None:
-                weakrefs_still_alive.append(ref)
-                o.eval()
-        Count.weakrefs = weakrefs_still_alive
-
-
-    # INSTANCE
-    # --------
-
-    def __init__(self, _value=None):
-        Count.weakrefs.append(weakref.ref(self))
-        self._value = _value
-
-    def __call__(self):
-        if self._value is None:
-            self._value = Count.total_count
-            Count.total_count += 1
-        return self._value
-
-    @property
-    def value(self):
-        if self._value is None:
-            self._value = Count.total_count
-            Count.total_count += 1
-        return self._value
-
-    def eval(self):
-        self.value
-        return self
-
-    def __str__(self):
-        return "?" if self._value is None else str(self._value)
-
-    def __repr__(self):
-        return str(self)
+        @staticmethod
+        def eval_all():
+            weakrefs_still_alive = []
+            for ref in Count.weakrefs:
+                o = ref()
+                if o is not None:
+                    weakrefs_still_alive.append(ref)
+                    o.eval()
+            Count.weakrefs = weakrefs_still_alive
 
 
-# TODO unpickable
-def create_counter():
-    """ this factory method is used to create independent Count classes """
+        # INSTANCE
+        # --------
+
+        def __init__(self, _value=None):
+            Count.weakrefs.append(weakref.ref(self))
+            self._value = _value
+
+
+        def __call__(self):
+            if self._value is None:
+                self._value = Count.total_count
+                Count.total_count += 1
+            return self._value
+
+        @property
+        def value(self):
+            if self._value is None:
+                self._value = Count.total_count
+                Count.total_count += 1
+            return self._value
+
+        def eval(self):
+            self.value
+            return self
+
+        def __str__(self):
+            return "?" if self._value is None else str(self._value)
+
+        def __repr__(self):
+            return str(self)
+
+
+# TODO unpickable with pyximport
+def create_counter(classname="Count"):
+    """ this factory method is used to create independent Count classes
+    CAUTION: for pickle to work, the classname must be the same name as the variable this factory-call is set to """
 
     class Count(object):
         """ future-like counting object
@@ -151,6 +154,16 @@ def create_counter():
         def __repr__(self):
             return str(self)
 
+
+    # For pickling to work, the __module__ variable needs to be set to the frame
+    # where the named tuple is created.  Bypass this step in environments where
+    # sys._getframe is not defined (Jython for example) or sys._getframe is not
+    # defined for arguments greater than 0 (IronPython).
+    try:
+        Count.__module__ = sys._getframe(1).f_globals.get('__name__', '__main__')
+    except (AttributeError, ValueError):
+        pass
+    Count.__name__ = classname
     return Count
 
 
