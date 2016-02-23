@@ -1,8 +1,7 @@
-from gst._gst import Structure
-
 from mygenerators import deleteallbutone
 from itertools import islice
 import cPickle
+import ujson
 import weakref
 
 from copy import deepcopy
@@ -78,7 +77,8 @@ class Count(object):
         return str(self)
 
 
-# TODO unpickable
+
+# TODO crucial disadvantage: this is not picklable. First research does not show any solutions
 def create_counter():
     """ this factory method is used to create independent Count classes """
 
@@ -127,6 +127,11 @@ def create_counter():
             Count.weakrefs.append(weakref.ref(self))
             self._value = _value
 
+        def __getstate__(self):
+            return self._value
+
+        def __setstate__(self, state):
+            self._value = state
 
         def __call__(self):
             if self._value is None:
@@ -155,13 +160,6 @@ def create_counter():
 
 
 
-
-
-
-
-
-# TODO the whole struct type is jsonable, and thus probably improvable with specific cython
-
 class Structure(object):
     """ implements generic dict-list-combining structure like it is used in pyparsing.ParseResult """
 
@@ -182,10 +180,10 @@ class Structure(object):
             self.struct = struct
             self.leaves = leaves
         elif initializer != 'None':
-            self.struct = dict(list=[None], dict={}, pseudo=False, liftedkeys=False, n=1)
+            self.struct = dict(list=[0], dict={}, pseudo=False, liftedkeys=False)
             self.leaves = [initializer]
         else:
-            self.struct = dict(list=[], dict={}, pseudo=False, liftedkeys=False, n=0)
+            self.struct = dict(list=[], dict={}, pseudo=False, liftedkeys=False)
             self.leaves = []
 
     def deepcopy(self, memo=None):
@@ -196,7 +194,7 @@ class Structure(object):
     # -----
 
     def clear(self):
-        self.struct = dict(list=[], dict={}, pseudo=False, liftedkeys=False, n=0)
+        self.struct = dict(list=[], dict={}, pseudo=False, liftedkeys=False)
         self.leaves = []
 
     def set_name(self, name):
@@ -229,17 +227,15 @@ class Structure(object):
                     list = [sub],
                     dict = self._lift_keys(sub['dict']) if liftkeys else {},
                     pseudo = False,
-                    liftedkeys = False,
-                    n = sub['n']
+                    liftedkeys = False
                 )
             # keep old leaves
         else:
             self.struct = dict(
-                list = [None],
+                list = [0],
                 dict = self._lift_keys(sub['dict']) if liftkeys else {},
                 pseudo = False,
-                liftedkeys = False,
-                n = 1
+                liftedkeys = False
             )
             self.leaves = [wrapper(Structure(struct=sub, leaves=self.leaves))]
 
@@ -273,23 +269,20 @@ class Structure(object):
                 for t in s: # yield from in python 3.x, calls __iter__
                     yield t
             else:
-                yield s #this is already a true leaf, not only a Count
+                yield s
 
     def iter_withpseudo(self):
         """ flattens out leaves, but not pseudo groups """
-        cur_leaf = 0
         for s in self.struct['list']:
-            if s is None: #leaf
-                leaf = self.leaves[cur_leaf]
+            if isinstance(s, int): #leaf
+                leaf = self.leaves[s]
                 if isinstance(leaf, list) and Structure.FLATTEN_LISTS:
                     for subleaf in leaf:
                         yield subleaf
                 else:
                     yield leaf
-                cur_leaf += 1
             else:
-                yield Structure(struct=s, leaves=self.leaves[cur_leaf : cur_leaf+s['n']])
-                cur_leaf += s['n']
+                yield Structure(struct=s, leaves=self.leaves)
 
     def __getitem__(self, index):
         """ depending on index it gives list entry (for integers) or dictionary entries (for names) """
@@ -315,13 +308,11 @@ class Structure(object):
                 else:
                     # base case
                     elem = self.struct['list'][idx]
-                    previous = self.struct['list'][:idx]
-                    cur_leaf = sum(1 if s is None else s['n'] for s in previous)
 
-                    if elem is None: # leaf
-                        yield self.leaves[cur_leaf]
+                    if isinstance(elem, int):
+                        yield self.leaves[elem]
                     else:
-                        yield Structure(struct=elem, leaves=self.leaves[cur_leaf : cur_leaf+elem['n']])
+                        yield Structure(struct=elem, leaves=self.leaves) #TODO as before, these leaves work, however are inefficient for map, as much stays unused
 
     def __len__(self):
         """ this needs very long to compute """
@@ -336,6 +327,26 @@ class Structure(object):
         base += other # (+=) == __iadd__
         return base
 
+    @staticmethod
+    def _get_offset(struct):
+        """ traverses struct reversely until it finds leaf """
+        for r in reversed(struct['list']):
+            if isinstance(r, int):
+                return r + 1 # offset is one bigger than biggest int, as we start counting with 0
+            else:
+                sub_offset = Structure._get_offset(r)
+                if sub_offset is not None:  # means that return was called, i.e. offset found
+                    return sub_offset
+
+    @staticmethod
+    def _add_offset(offset, struct_list):
+        for i, s in enumerate(struct_list):
+            if isinstance(s, int):
+                struct_list[i] = s + offset
+            else:
+                Structure._add_offset(offset, s['list'])
+        return struct_list
+
     def __iadd__(self, other):
         if not isinstance(other, Structure):
             raise NotImplementedError("cannot iadd type %s" % type(other))
@@ -348,8 +359,19 @@ class Structure(object):
                 self.struct['dict'].get(key, []) + otherdict_transf
             ))
 
-        self.struct['list'] += other.struct['list'] # this can be directly used without copying
-        self.struct['n'] += other.struct['n']
+        otherlist_offset = Structure._get_offset(self.struct)
+
+        # copy struct for _add_offset
+        # TODO this is not necessary when using Counts instead of int, as no _add_offset is needed either,
+        # however then ujson is also no longer possible, but probably the struct then has not to be copied at all
+        # up to now, I think this is only used for construction, as repetitions just store lists
+        # Downside of Counts: every iteration needs a bit longer (i.e. for checking whether Count is set already),
+        # but iterations are also only needed for user side, not for parsing
+
+        other_list = ujson.loads(ujson.dumps(other.struct['list']))
+        if otherlist_offset is not None:
+            Structure._add_offset(otherlist_offset, other_list)
+        self.struct['list'] += other_list
         # liftedkeys / pseudo are set if the structure is grouped.
         # Top-Level Structures are by default non-pseudo, which makes sense, and also do not have to lift keys
         # self.struct['pseudo'] &= other.struct['pseudo']
@@ -371,8 +393,8 @@ class Structure(object):
     @staticmethod
     def _repr_struct(struct):
         # [] are for pretty printing, semantically it is rather a ()
-        if struct is None:
-            return repr(None)
+        if isinstance(struct, int):
+            return repr(struct)
         else:
             return "{'list' : %s, 'dict' : %s, 'pseudo' : %s, 'liftedkeys' : %s}" % (
                 "[%s]" % ",".join(Structure._repr_struct(s) for s in struct['list']),
