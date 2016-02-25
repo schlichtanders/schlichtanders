@@ -1,5 +1,4 @@
 from numpy import ma
-from matplotlib import cbook
 from matplotlib.colors import Normalize
 
 class Centre(Normalize):

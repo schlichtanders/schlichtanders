@@ -42,8 +42,11 @@ setup(
     author_email='Stephan.Sahm@gmx.de',
     license='open source',
     packages=['schlichtanders'],
-    # parts will break in pypy, however what can run hopefully runs
-    # install_requires=['numpy >= 1.10.2',
-    #                   'matplotlib >= 1.3.1'],
+    install_requires = [],
+    extras_require = {
+        'CPython':  ['numpy >= 1.10.2',
+                     'matplotlib >= 1.3.1',
+                     'ujson >= 1.35'],
+    },
     cmdclass={'clean': CleanCmd}
     )

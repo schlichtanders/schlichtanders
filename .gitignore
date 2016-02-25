@@ -80,3 +80,5 @@ venv/
 .project
 .pydevproject
 .settings
+
+.idea
