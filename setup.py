@@ -44,10 +44,12 @@ setup(
     packages=['schlichtanders'],
     install_requires = [],
     extras_require = {
-        'PyPy':  [],
-        'CPython':  ['numpy >= 1.10.2',
-                     'matplotlib >= 1.3.1',
-                     'ujson >= 1.35'],
+        'pylab':  ['numpy >= 1.10.2',
+                   'matplotlib >= 1.3.1']
+    },
+    # include_package_data=True,  # should work, but doesn't, I think pip does not recognize git automatically
+    package_data = {
+        'schlichtanders': ['*.pyx'], #include cython files
     },
     cmdclass={'clean': CleanCmd}
 )
