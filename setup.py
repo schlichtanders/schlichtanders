@@ -44,9 +44,10 @@ setup(
     packages=['schlichtanders'],
     install_requires = [],
     extras_require = {
+        'PyPy':  [],
         'CPython':  ['numpy >= 1.10.2',
                      'matplotlib >= 1.3.1',
                      'ujson >= 1.35'],
     },
     cmdclass={'clean': CleanCmd}
-    )
+)
