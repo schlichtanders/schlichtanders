@@ -1,5 +1,3 @@
-from gst._gst import Structure
-
 from mygenerators import deleteallbutone
 from itertools import islice
 import cPickle

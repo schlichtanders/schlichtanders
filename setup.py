@@ -49,7 +49,7 @@ setup(
     },
     # include_package_data=True,  # should work, but doesn't, I think pip does not recognize git automatically
     package_data = {
-        'schlichtanders': ['*.pyx'], #include cython files
+        'schlichtanders': ['*.pyx', '*pyxbld'], #include cython files
     },
     cmdclass={'clean': CleanCmd}
 )
