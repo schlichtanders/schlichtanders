@@ -5,6 +5,7 @@ import weakref
 import sys
 
 from copy import deepcopy
+
 def pickle_deepcopy(o):
     return cPickle.loads(cPickle.dumps(o, -1))
 
@@ -305,7 +306,8 @@ class Structure(object):
     def __getitem__(self, index):
         """ depending on index it gives list entry (for integers) or dictionary entries (for names) """
         if isinstance(index, int):
-            return next(islice(self, index, None))  #TODO relatively inefficient I think! (but won't be really needed neither)
+            # the only reliable way is to iterate up to the index:
+            return next(islice(self, index, None))
         if isinstance(index, slice):
             return list(islice(self, index.start, index.stop, index.step))
         else:
@@ -394,3 +396,15 @@ class Structure(object):
 
     def __repr__(self):
         return "{struct: %s, leaves: %s}" % (self._repr_struct(self.struct), repr(self.leaves))
+
+
+
+
+# Further Objects:
+# ----------------
+
+class Struct(object):
+    """ simple empty class to use as a struct object like common in Matlab """
+    pass
+
+Empty = Struct

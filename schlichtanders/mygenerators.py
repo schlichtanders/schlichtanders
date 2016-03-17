@@ -25,7 +25,6 @@ def merge(*args):
     istuple = [isinstance(f, tuple) for f in firsts]
 
     def merge_row(row):
-        # TODO maybe use list as intermediate type to prevent copying??
         return reduce(op.add, (x if t else (x,) for t, x in izip(istuple, row)))
 
     yield merge_row(firsts) # yield initials
@@ -37,7 +36,6 @@ def merge_dyn(*args):
     slightly slower, but less code =), and more dynamic
     """
     def merge_row(row):
-        # TODO maybe use list as intermediate type to prevent copying??
         return reduce(op.add,
             (x if isinstance(x, tuple) else (x,) for x in row)
         )
@@ -95,6 +93,17 @@ def _product(args):
 def eat(gen, n=1):
     for _ in xrange(n):
         next(gen)
+
+def eatN(N, iterator):
+    """ just eats the first N iterator elements away (kind of a delete)
+    essentially this is a flipped version of `eat`
+
+    :param N: how much to eat
+    :param iterator: to be eaten
+    :return: iterator[N::] kind of
+    """
+    for _ in xrange(N):
+        next(iterator)
 
 def hist(iterable, history_size=1, filler="None"):
     gen = iter(iterable)
