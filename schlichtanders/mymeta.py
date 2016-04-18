@@ -1,22 +1,47 @@
 import abc
-import inspect
 from contextlib import contextmanager
+from .myfunctools import use_as_needed
+import wrapt
+import inspect
+
+
 
 # LIFT functionality
 # ==================
 
+
+class NotLiftable(TypeError):
+    pass
+
+
+# variant 0 as static function decorator
+# --------------------------------------
+# TODO include into generic lift function?
+
+def lift_from(*classes):
+    """ shall decorate class method ideally"""
+    @wrapt.decorator
+    def wrapper(lift, instance, args, kwargs):
+        to_lift, args = args[0], args[1:]
+        if not isinstance(to_lift, classes):
+            for c in classes:
+                if hasattr(c, "lift"):
+                    try:
+                        c.lift(to_lift, *args, **kwargs)  # preprocess lift
+                        break
+                    except NotLiftable:
+                        pass
+            else:
+                raise NotLiftable("Not liftable from class %s" % to_lift.__class__)
+        # final lift:
+        return lift(to_lift, *args, **kwargs)
+    return wrapper
+
+
+
 # variante 1 as Metaclass
 # -----------------------
-def use_as_needed(func, kwargs):
-    meta = inspect.getargspec(func)
-    if meta.keywords is not None:
-            return func(**kwargs)
-    else:
-        # not generic super-constructor - pick only the relevant subentries:
-        return func(**{k:kwargs[k] for k in kwargs if k in meta.args})
 
-class NotLiftable(RuntimeError):
-    pass
 
 @contextmanager
 def super_liftable(cls, self):

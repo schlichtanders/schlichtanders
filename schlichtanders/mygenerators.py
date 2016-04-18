@@ -5,6 +5,18 @@ import operator as op
 from timeit import default_timer
 
 
+
+def call(funcs, *args, **kwargs):
+    for f in funcs:
+        yield f(*args, **kwargs)
+
+def run(gen):
+    for _ in gen: pass
+
+
+
+
+
 def deleteallbutone(elm, l):
     one = False
     for i in l:

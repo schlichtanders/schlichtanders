@@ -1,10 +1,23 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 from __future__ import print_function, division
-
+import re
+import sys, shutil, os, subprocess
 __author__ = 'Stephan Sahm <Stephan.Sahm@gmx.de>'
 
-import re
+# paths
+
+def abspath(p):
+    return os.path.abspath(os.path.expanduser(p))
+
+def ensure_endswith_sep(path):
+    if not path.endswith(os.path.sep):
+        return path + os.path.sep
+    else:
+        return path
+
+
+# files
 
 def load(filename):
     """ convenience function to easily load file
@@ -14,6 +27,31 @@ def load(filename):
     """
     with open(filename) as f:
         return f.read()
+
+
+def manipulate_file(string_manipulater, file_path, *args, **kwargs):
+    """ filepath gets first argument of string_manipulater, *args, **kwargs
+    can pass all other arguments
+
+    Shall be used like working strings.
+    Instead of ``string_manipulater(string, *args, **kwargs)``
+    The syntax gets kind of``string_manipulater, file, *args, **kwargs``
+    """
+    file_dir, file_fn = os.path.split(file_path)
+    shutil.copy(file_path, os.path.join(file_dir, ".%s.bak" % file_fn))  # security copy
+    with open(file_path, "r") as f:
+        data = f.read()
+    with open(file_path, "w") as f:
+        f.write(string_manipulater(data, *args, **kwargs))
+
+
+def open_by_default_application(filepath):
+    if sys.platform.startswith('darwin'):
+        subprocess.call(('open', filepath))
+    elif os.name == 'nt':
+        os.startfile(filepath)
+    elif os.name == 'posix':
+        subprocess.call(('xdg-open', filepath))
 
 
 #: copied from https://github.com/getify/JSON.minify/blob/python/json_minify/__init__.py

@@ -3,8 +3,9 @@ from itertools import islice
 import cPickle
 import weakref
 import sys
-
 from copy import deepcopy
+from collections import Mapping
+
 
 def pickle_deepcopy(o):
     return cPickle.loads(cPickle.dumps(o, -1))
@@ -403,8 +404,15 @@ class Structure(object):
 # Further Objects:
 # ----------------
 
-class Struct(object):
-    """ simple empty class to use as a struct object like common in Matlab """
-    pass
+class Namespace(object):
+    """ simple class to use as namespace (like a struct object in Matlab) """
 
-Empty = Struct
+    def __init__(self, **kwargs):
+        self.__dict__ = kwargs
+
+Empty = Struct = Namespace
+
+
+
+
+
