@@ -5,6 +5,17 @@ import operator as op
 from timeit import default_timer
 
 
+def iter_kwargs(kwargs):
+    keys = kwargs.keys()
+    values = kwargs.values()
+    for args in izip(values):
+        yield dict(izip(keys, args))
+
+def iter_args(args):
+    for a in izip(*args):
+        yield a
+
+# ---------------------
 
 def call(funcs, *args, **kwargs):
     for f in funcs:
@@ -15,6 +26,7 @@ def run(gen):
 
 
 
+# -------------------------
 
 
 def deleteallbutone(elm, l):
@@ -68,13 +80,16 @@ def accumulate(iterable, func=operator.add, base=None):
         yield base
 
 
-def flatten(iterable):
-    for i in iterable:
-        if hasattr(i, "__iter__"):
-            for n in flatten(i):
-                yield n
-        else:
-            yield i
+
+
+def deepflatten(maybe_iterable):
+    """ flattens out everything """
+    try:
+        for i in maybe_iterable:
+            for f in deepflatten(i):  # yield from in python3
+                yield f
+    except TypeError:  # either not iterable or iteration over a 0-d array not possible (numpy)
+        yield maybe_iterable
 
 
 def enumerate_(iterable):

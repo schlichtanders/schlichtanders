@@ -4,7 +4,26 @@ import cPickle
 import weakref
 import sys
 from copy import deepcopy
+from itertools import count
 from collections import Mapping
+
+"""
+Generally Helpful Objects
+=========================
+"""
+class Namespace(object):
+    """ simple class to use as namespace (like a struct object in Matlab) """
+
+    def __init__(self, **kwargs):
+        self.__dict__ = kwargs
+
+Empty = Struct = Namespace
+
+
+"""
+Structure and Related Objects
+=============================
+"""
 
 
 def pickle_deepcopy(o):
@@ -170,9 +189,6 @@ def create_counter(classname="Count"):
 
 
 
-
-
-
 # TODO the whole struct type is jsonable, and thus probably improvable with specific cython
 
 class Structure(object):
@@ -182,6 +198,9 @@ class Structure(object):
     FLATTEN_LISTS = True
     EMPTY_DEFAULT = "EMPTY"
     LeafError = TypeError, KeyError
+
+    #: By default all key access return lists. With this option set to true, keys delivering singleton [object] will return object directly
+    KEY_ACCESS_REDUCE_SINGLETONS = False
 
     # Construction
     # ------------
@@ -306,13 +325,20 @@ class Structure(object):
 
     def __getitem__(self, index):
         """ depending on index it gives list entry (for integers) or dictionary entries (for names) """
-        if isinstance(index, int):
-            # the only reliable way is to iterate up to the index:
-            return next(islice(self, index, None))
-        if isinstance(index, slice):
-            return list(islice(self, index.start, index.stop, index.step))
-        else:
-            return list(self._dictitem_gen(index))
+        try:
+            if isinstance(index, int):
+                # the only reliable way is to iterate up to the index:
+                return next(islice(self, index, None))
+            if isinstance(index, slice):
+                return list(islice(self, index.start, index.stop, index.step))
+            else:
+                key_return = list(self._dictitem_gen(index))
+                if self.KEY_ACCESS_REDUCE_SINGLETONS and len(key_return) == 1:
+                    return key_return[0]
+                else:
+                    return key_return
+        except StopIteration:
+            raise IndexError("list index out of range")
 
 
     def _dictitem_gen(self, index):
@@ -375,6 +401,7 @@ class Structure(object):
 
 
     def __str__(self):
+
         subs = [str(s) for s in self]
         strsubs = ",".join(subs)
         if len(subs) == 1 and self.struct['pseudo']: # if only pseudo groups, ignore them completely, also in str representation
@@ -383,13 +410,15 @@ class Structure(object):
             return "[%s]" % strsubs
 
     @staticmethod
-    def _repr_struct(struct):
+    def _repr_struct(struct, counter=None):
+        if counter is None:
+            counter = count()
         # [] are for pretty printing, semantically it is rather a ()
         if struct is None:
-            return repr(None)
+            return "#%i" % next(counter)
         else:
             return "{'list' : %s, 'dict' : %s, 'pseudo' : %s, 'liftedkeys' : %s}" % (
-                "[%s]" % ",".join(Structure._repr_struct(s) for s in struct['list']),
+                "[%s]" % ",".join(Structure._repr_struct(s, counter) for s in struct['list']),
                 repr(struct['dict']),
                 struct['pseudo'],
                 struct['liftedkeys']
@@ -397,22 +426,5 @@ class Structure(object):
 
     def __repr__(self):
         return "{struct: %s, leaves: %s}" % (self._repr_struct(self.struct), repr(self.leaves))
-
-
-
-
-# Further Objects:
-# ----------------
-
-class Namespace(object):
-    """ simple class to use as namespace (like a struct object in Matlab) """
-
-    def __init__(self, **kwargs):
-        self.__dict__ = kwargs
-
-Empty = Struct = Namespace
-
-
-
 
 
