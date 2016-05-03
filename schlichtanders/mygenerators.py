@@ -3,6 +3,7 @@ from itertools import izip
 import operator
 import operator as op
 from timeit import default_timer
+inf = float("inf")
 
 
 def iter_kwargs(kwargs):
@@ -132,7 +133,7 @@ def eatN(N, iterator):
     for _ in xrange(N):
         next(iterator)
 
-def hist(iterable, history_size=1, filler="None"):
+def history(iterable, history_size=1, filler="None"):
     gen = iter(iterable)
     if filler != "None":
         gen = it.chain(it.repeat(filler, history_size), gen)
@@ -140,6 +141,8 @@ def hist(iterable, history_size=1, filler="None"):
     for i, g in enumerate(gens):
         eat(g, i) # eat history, last gen has most eaten
     return izip(*gens)
+
+hist = history
 
 def compress_idx(data, selectors):
     """
