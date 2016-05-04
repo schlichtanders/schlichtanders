@@ -111,11 +111,25 @@ class DefaultDict(dict):
         :param kwargs: kwargs for standard dict initializations
         """
         self.default_getitem = default_getitem
+        self.expand = True
         super(DefaultDict, self).__init__(**kwargs)
+
+    def noexpand(self):
+        self.expand = False
+        return self
 
     def __getitem__(self, key):
         try:
             return super(DefaultDict, self).__getitem__(key)
         except KeyError:
-            return self.default_getitem(key)
+            value = self.default_getitem(key)
+            if self.expand:
+                self[key] = value
+            return value
 
+
+class IdentityDict(DefaultDict):
+    """ almost like defaultdict, with the crucial difference that new keys are not added dynamically, but always regenerated """
+    def __init__(self, default_getitem=lambda key: key, **kwargs):
+        super(IdentityDict, self).__init__(default_getitem, **kwargs)
+        self.noexpand()
