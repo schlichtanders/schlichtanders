@@ -63,6 +63,11 @@ compose
 -------
 """
 
+
+def identity(x):
+    return x
+
+
 def compose(*funcs, **kwargs):
     """ Higher level function to compose several functions
 
@@ -86,6 +91,9 @@ def compose(*funcs, **kwargs):
     firstlatest = kwargs.get("firstlatest", True)  #: python 2.7 workaround for keywords after *args
     expand_tuple = kwargs.get("expand_tuple", True)  #: python 2.7 workaround for keywords after *args
     funcs = funcs[::-1] if firstlatest else funcs
+    funcs = [f for f in funcs if f != identity]
+    if not funcs:
+        funcs = [identity]
 
     def composed(*args, **kwargs):  # TODO build a useful function documentation like usual for function wrappers
         def call(args, f):

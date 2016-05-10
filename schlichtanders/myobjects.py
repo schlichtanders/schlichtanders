@@ -5,7 +5,7 @@ import weakref
 import sys
 from copy import deepcopy
 from itertools import count
-from collections import Mapping
+from collections import Mapping, Sequence
 
 """
 Generally Helpful Objects
@@ -191,7 +191,7 @@ def create_counter(classname="Count"):
 
 # TODO the whole struct type is jsonable, and thus probably improvable with specific cython
 
-class Structure(object):
+class Structure(Sequence):
     """ implements generic dict-list-combining structure like it is used in pyparsing.ParseResult """
 
 

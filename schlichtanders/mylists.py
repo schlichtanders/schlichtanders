@@ -1,12 +1,16 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 from __future__ import print_function, division
-from collections import MutableSequence, Mapping
+from collections import MutableSequence, Mapping, Sequence
 from copy import deepcopy, copy
 import operator as op
 import mygenerators
 
 __author__ = 'Stephan Sahm <Stephan.Sahm@gmx.de>'
+
+def sequencefy(o):
+    return o if isinstance(o, Sequence) else [o]
+
 
 def findall(l, o):
     """ find all indices from list ``l`` where entries match specific object ``o``

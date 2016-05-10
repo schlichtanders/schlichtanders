@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import print_function, division
 from .mygenerators import iter_args, iter_kwargs
-from itertools import izip, izip_longest
+from itertools import izip, izip_longest, islice
 from .myobjects import Namespace
 
 __author__ = 'Stephan Sahm <Stephan.Sahm@gmx.de>'
@@ -105,6 +105,66 @@ def average(f, repeat_n_times=1):
 
     return f_averaged
 
+
+def chunk(f, chunk_size=10, fill=False):
+    """ assumes all args, kwargs refer to same size lists """
+    outer = Namespace(
+        i=0,
+        batch_args=None,
+        batch_kwargs=None
+    )
+    if fill:
+        raise ValueError("not supported yet")
+
+    def f_chunked(xs, *batch_args, **batch_kwargs):
+        # initialize args, kwargs only once:
+        if outer.batch_args is None:
+            outer.batch_args = [list(b) for b in batch_args]
+            outer.batch_kwargs = {k: list(v) for k,v in batch_kwargs.iteritems()}
+
+        a = outer.i
+        outer.i += chunk_size
+        b = outer.i
+        if outer.i >= len(outer.batch_args[0]):  # todo check either args or kwargs (either might be empty)
+            outer.i = 0  # loop
+
+        return f(
+            xs,
+            *(arg[a:b] for arg in outer.batch_args),
+            **{k: v[a:b] for k, v in outer.batch_kwargs.iteritems()}
+        )
+    return f_chunked
+
+
+def chunk_inf_generators(f, chunk_size=10, fill=False):
+    """ assumes all args, kwargs refer to same size lists """
+    outer = Namespace(
+        i=0,
+        batch_args=None,
+        batch_kwargs=None
+    )
+    if fill:
+        raise ValueError("not supported yet")
+
+    def f_chunked(xs, *batch_args, **batch_kwargs):
+        # initialize args, kwargs only once:
+        if outer.batch_args is None:
+            # fillvalue works both as empty args and empty kwargs
+            outer.batch_args = batch_args
+            outer.batch_kwargs = batch_kwargs
+
+        a = outer.i
+        outer.i += chunk_size
+        b = outer.i
+        if outer.i >= len(outer.batch_args[0]):  # todo check either args or kwargs (either might be empty)
+            outer.i = 0  # loop
+
+        return f(
+            xs,
+            *(list(islice(arg, a, b)) for arg in outer.batch_args),
+            **{k: list(islice(v, a, b)) for k, v in outer.batch_kwargs.iteritems()}
+        )
+    return f_chunked
 
 
 """
