@@ -20,6 +20,21 @@ class Namespace(object):
 Empty = Struct = Namespace
 
 
+from mycontextmanagers import until_stopped, ignored
+
+
+class NestedNamespace(object):
+
+    def __init__(self, *instances):
+        self.instances = instances
+
+    def __getattr__(self, name):
+        for ins in self.instances:
+            with ignored(AttributeError):
+                return getattr(ins, name)
+
+
+
 """
 Structure and Related Objects
 =============================

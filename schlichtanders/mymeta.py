@@ -7,7 +7,6 @@ from functools import partial
 import inspect
 from collections import defaultdict
 
-
 """
 make one object like another
 ============================

@@ -24,6 +24,7 @@ def update(dict1, dict2, overwrite=True, append=True):
         for k in dict2:
             if k not in dict1:
                 dict1[k] = dict2[k]
+    return dict1
 
 
 
@@ -100,19 +101,48 @@ class ComposedDictsView(Mapping):
             return iter(self.dict1)
 
 
+class ModifyDict(Mapping):
+    def __init__(self, base_dict, modify_getitem=lambda key, value: value):
+        self.base_dict = base_dict
+        self.modify_getitem = modify_getitem
+
+    def __getitem__(self, item):
+        return self.modify_getitem(item, self.base_dict[item])
+
+    def __iter__(self):
+        return iter(self.base_dict)
+
+    def __len__(self):
+        return len(self.base_dict)
+
+
 class DefaultDict(dict):
     """
     like ``collections.defaultdict``, however default method is called with the accessed key
     """
-    def __init__(self, default_getitem=lambda key: key, **kwargs):
+    def __init__(self, default_getitem=None, default_setitem=None, default_delitem=None, *args, **kwargs):
         """ constructs a DefaultDict
 
         :param default_getitem: defaults to returning the same key, i.e. like an identity function
         :param kwargs: kwargs for standard dict initializations
         """
-        self.default_getitem = default_getitem
+        # if either parameter is not callable, regard it as additional arg
+        if default_delitem is not None and not hasattr(default_delitem, '__call__'):
+            args = (default_delitem,) + args
+            default_delitem = None
+        if default_setitem is not None and not hasattr(default_getitem, '__call__'):
+            args = (default_setitem,) + args
+            default_setitem = None
+        if default_getitem is not None and not hasattr(default_getitem, '__call__'):
+            args = (default_getitem,) + args
+            default_getitem = None
+
+        self.default_getitem = super(DefaultDict, self).__getitem__ if default_getitem is None else default_getitem
+        self.default_setitem = super(DefaultDict, self).__setitem__ if default_setitem is None else default_setitem
+        self.default_delitem = super(DefaultDict, self).__delitem__ if default_delitem is None else default_delitem
+
         self.expand = True
-        super(DefaultDict, self).__init__(**kwargs)
+        super(DefaultDict, self).__init__(*args, **kwargs)
 
     def noexpand(self):
         self.expand = False
@@ -124,16 +154,43 @@ class DefaultDict(dict):
         except KeyError:
             value = self.default_getitem(key)
             if self.expand:
-                self[key] = value
+                super(DefaultDict, self).__setitem__(key, value)  # super needed as setitem may be overwritten too
             return value
+
+    def __setitem__(self, key, value):
+        if key in self:
+            super(DefaultDict, self).__setitem__(key, value)
+        else:
+            self.default_setitem(key, value)
+
+    def __delitem__(self, key):
+        if key in self:
+            super(DefaultDict, self).__delitem__(key)
+        else:
+            self.default_delitem(key)
 
 
 class IdentityDict(DefaultDict):
     """ almost like defaultdict, with the crucial difference that new keys are not added dynamically, but always regenerated """
-    def __init__(self, default_getitem=lambda key: key, **kwargs):
-        super(IdentityDict, self).__init__(default_getitem, **kwargs)
-        self.noexpand()
+    def __init__(self, *args, **kwargs):
+        """ see DefaultDict for signature """
+        super(IdentityDict, self).__init__(*args, **kwargs)
+        self.expand = False
 
+    def set_expand(self):
+        self.expand = True
+
+
+class PassThroughDict(IdentityDict):
+    """ postmap which passes everything through model if not further defined """
+    def __init__(self, dict_like, *args, **kwargs):
+        super(PassThroughDict, self).__init__(
+            dict_like.__getitem__,
+            dict_like.__setitem__,
+            dict_like.__delitem__,
+            *args,
+            **kwargs
+        )
 
 
 class FrozenDict(Mapping):

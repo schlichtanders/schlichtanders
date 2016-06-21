@@ -5,8 +5,18 @@ from collections import MutableSequence, Mapping, Sequence
 from copy import deepcopy, copy
 import operator as op
 import mygenerators
+import wrapt
 
 __author__ = 'Stephan Sahm <Stephan.Sahm@gmx.de>'
+
+@wrapt.decorator
+def return_list(wrapped, instance, args, kwargs):
+    return list(wrapped(*args, **kwargs))
+
+def as_list(gen):
+    """ generator decorator which executes the generator and returns results as list"""
+    return list(gen())
+
 
 def sequencefy(o):
     return o if isinstance(o, Sequence) else [o]
@@ -42,13 +52,19 @@ def remove_duplicates(l):
         else:
             unique.add(elem)
             i += 1
+    return l
+
 
 def add_up(iterable):
     return reduce(op.add, iterable)
 
 
-def deepflatten(maybeiterable):
-    return list(mygenerators.deepflatten(maybeiterable))
+def deepflatten(maybe_iterable):
+    return list(mygenerators.deepflatten(maybe_iterable))
+
+
+def shallowflatten(maybe_iterable):
+    return list(mygenerators.shallowflatten(maybe_iterable))
 
 
 class DictList(MutableSequence):

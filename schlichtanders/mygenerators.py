@@ -1,5 +1,5 @@
 import itertools as it
-from itertools import izip
+from itertools import izip, islice
 import operator
 import operator as op
 from timeit import default_timer
@@ -81,6 +81,16 @@ def accumulate(iterable, func=operator.add, base=None):
         yield base
 
 
+def shallowflatten(maybe_iterable):
+    try:
+        for i in maybe_iterable:
+            try:
+                for _i in i:
+                    yield _i
+            except TypeError:
+                yield i
+    except TypeError:
+        yield maybe_iterable
 
 
 def deepflatten(maybe_iterable):
@@ -133,6 +143,7 @@ def eatN(N, iterator):
     for _ in xrange(N):
         next(iterator)
 
+
 def history(iterable, history_size=1, filler="None"):
     gen = iter(iterable)
     if filler != "None":
@@ -143,6 +154,30 @@ def history(iterable, history_size=1, filler="None"):
     return izip(*gens)
 
 hist = history
+
+
+def every(nth, iterable):
+    it = iter(iterable)
+    while True:
+        eat(it, nth-1)
+        yield next(it)
+
+
+def chunk_list(chunk_size, iterable):
+    it = iter(iterable)
+    while True:
+        l = list(islice(it, chunk_size))
+        if not l:
+            break
+        yield l
+
+
+def chunk(chunk_size, iterable):
+    it = iter(iterable)
+    while True:
+        yield islice(it, chunk_size)
+
+
 
 def compress_idx(data, selectors):
     """
@@ -157,9 +192,11 @@ def compress_idx(data, selectors):
             yield d
             idx = next(idxs)
 
+
 def int_exponentials(base=2):
     for i in it.count(0):
         yield int(base**i)
+
 
 def succint_exponentials(base=2):
     OFFSET = 0
@@ -167,6 +204,11 @@ def succint_exponentials(base=2):
         if a + OFFSET == o + OFFSET:
             OFFSET += 1
         yield a + OFFSET
+
+
+def takeN(n, iterable):
+    return islice(iterable, n)
+
 
 def takewhile1(predicate, iterable):
     # takewhile1(lambda x: x<5, [1,4,6,4,1]) --> 1 4 6
