@@ -279,10 +279,11 @@ def lift(func, *fmaps):
 
 
 def compose_fmap(*fmaps):
-    """ internally like lift, only that it returns a fmap """
-    final_fmap = fmaps[-1]
+    """ internally like lift, only that it returns a fmap
+    CAUTION: order is exactly reversed compared to lift (because of compose analogy)"""
+    final_fmap = fmaps[0]
     def overall_fmap(f, *args):
-        inner_f = lift(f, fmaps[:-1])
+        inner_f = lift(f, fmaps[-1:0:-1])  # 0 is not included
         final_fmap(inner_f, *args)
 
 

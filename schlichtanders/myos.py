@@ -3,12 +3,17 @@
 from __future__ import print_function, division
 import re
 import sys, shutil, os, subprocess
+from wmi import WMI
+
 __author__ = 'Stephan Sahm <Stephan.Sahm@gmx.de>'
 
+
 # paths
+# =====
 
 def abspath(p):
     return os.path.abspath(os.path.expanduser(p))
+
 
 def ensure_endswith_sep(path):
     if not path.endswith(os.path.sep):
@@ -17,7 +22,23 @@ def ensure_endswith_sep(path):
         return path
 
 
+# Windows
+# -------
+
+device = re.compile("[A-Z]:")
+mounts = {d.DeviceId: d.ProviderName for d in WMI().Win32_LogicalDisk()}
+
+
+def replace_unc(path):
+    drive, everythingelse = os.path.splitdrive(path)
+    everythingelse = everythingelse[1:]  # for some weird reasons the split drive command does not remove \\ in front of everythingelse
+    if device.match(drive):
+        return os.path.join(mounts[drive] + os.path.sep, everythingelse)
+    return path
+
+
 # files
+# =====
 
 def load(filename):
     """ convenience function to easily load file
