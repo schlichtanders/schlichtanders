@@ -3,7 +3,7 @@
 from __future__ import print_function, division
 import re
 import sys, shutil, os, subprocess
-from wmi import WMI
+import platform
 
 __author__ = 'Stephan Sahm <Stephan.Sahm@gmx.de>'
 
@@ -25,11 +25,16 @@ def ensure_endswith_sep(path):
 # Windows
 # -------
 
-device = re.compile("[A-Z]:")
-mounts = {d.DeviceId: d.ProviderName for d in WMI().Win32_LogicalDisk()}
+if platform.system() == "Windows":
+    from wmi import WMI
+    device = re.compile("[A-Z]:")
+    mounts = {d.DeviceId: d.ProviderName for d in WMI().Win32_LogicalDisk()}
 
 
 def replace_unc(path):
+    if platform.system() != "Windows":
+        return path
+
     drive, everythingelse = os.path.splitdrive(path)
     everythingelse = everythingelse[1:]  # for some weird reasons the split drive command does not remove \\ in front of everythingelse
     if device.match(drive):

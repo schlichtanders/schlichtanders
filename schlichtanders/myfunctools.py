@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import division
 import inspect
+import numpy as np
 from types import FunctionType, GeneratorType
 from functools import wraps, partial
 from collections import Mapping, Sequence
@@ -69,7 +70,10 @@ def summap(f, *batch_args):
     """
     batch_args = map(iter, batch_args)
     # initialize correctly:
-    summed_up = f(*[next(a) for a in batch_args])  # [] are essential as StopIteration is not handled intuitively
+    try:
+        summed_up = f(*[next(a) for a in batch_args])  # [] are essential as StopIteration is not handled intuitively
+    except StopIteration:
+        raise ValueError("empty args")
     with until_stopped:
         while True:
             summed_up += f(*[next(a) for a in batch_args])
@@ -84,7 +88,10 @@ def meanmap(f, *batch_args):
     batch_args = map(iter, batch_args)
 
     # initialize correctly:
-    summed_up = f(*[next(a) for a in batch_args])
+    try:
+        summed_up = f(*[next(a) for a in batch_args])
+    except StopIteration:
+        raise ValueError("empty args")
     n = 1
     with until_stopped:
         while True:
@@ -146,6 +153,45 @@ class Average(object):
         for _ in xrange(self.repeat_n_times - 1):
             summed_up += f(*args)
         return summed_up / self.repeat_n_times
+
+
+def sumexp(values):
+    largest = reduce(np.maximum, values)
+    return largest + np.log(sum(np.exp(r - largest) for r in values))
+
+
+def meanexp(values):
+    return sumexp(values) - np.log(len(values))
+
+
+def meanexpmap(f, *batch_args):
+    """ numerical stable version of log(1/n*sum(exp(...)) """
+    values = [f(*args) for args in izip(*batch_args)]
+    return meanexp(values)
+
+
+class AverageExp(object):
+    """ like average, only that the average is computed on exponential scale
+
+    log(Average(exp(x)))"""
+    def __init__(self, repeat_n_times=1, numerical_stable=True):
+        self.repeat_n_times = repeat_n_times
+        self.numerical_stable = numerical_stable
+
+    def __call__(self, f, *args):
+        if self.repeat_n_times == 1:  # usually standard case, therefore make it a bit faster
+            return f(*args)
+        # else, i.e. repeat_n_times > 1:
+        if self.numerical_stable:
+            repetitions = [f(*args) for _ in xrange(self.repeat_n_times)]
+            return meanexp(repetitions)
+        else:
+            summed_up = np.exp(f(*args))
+            for _ in xrange(self.repeat_n_times - 1):
+                summed_up += np.exp(f(*args))
+            return np.log(summed_up) - np.log(self.repeat_n_times)
+
+
 
 
 """
@@ -262,7 +308,7 @@ fmappable = {
 }
 
 
-def lift(func, *fmaps):
+def lift(f, *fmaps):
     """ will transform func to a new function with the fmaps applied like function composition
     e.g.
     >>> f_lifted = lift(f, summap, Average(10))
@@ -275,7 +321,9 @@ def lift(func, *fmaps):
     fmaps = [fmap] if not fmaps else fmaps  # revert everything as we thinking in terms of function composition
     def single_lift(f, fmap):
         return partial(fmap, f)
-    return reduce(single_lift, fmaps, func)
+    f_lifted = reduce(single_lift, fmaps, f)
+    f_lifted.wrapped = f
+    return f_lifted
 
 
 def compose_fmap(*fmaps):
@@ -283,10 +331,26 @@ def compose_fmap(*fmaps):
     CAUTION: order is exactly reversed compared to lift (because of compose analogy)"""
     final_fmap = fmaps[0]
     def overall_fmap(f, *args):
-        inner_f = lift(f, fmaps[-1:0:-1])  # 0 is not included
-        final_fmap(inner_f, *args)
+        inner_f = lift(f, *fmaps[-1:0:-1])  # 0 is not included
+        return final_fmap(inner_f, *args)
+    return overall_fmap
 
 
+def as_wrapper(*fmaps, **kwargs):
+    """ transforms fmap/fmaps into a wrapper function which can be applied to a function
+
+    again a version of lift
+
+    Parameters
+    ----------
+    reverse : bool
+        if True (default), function composition order is used (like compose_fmap), else order like used in lift
+    """
+    if kwargs.pop('reverse', True):
+        fmaps = fmaps[::-1]  # function composition style
+    def wrapper(f):
+        return lift(f, *fmaps)
+    return wrapper
 
 
 """
