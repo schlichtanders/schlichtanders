@@ -42,14 +42,13 @@ setup(
     author_email='Stephan.Sahm@gmx.de',
     license='open source',
     packages=['schlichtanders'],
-    install_requires = ['numpy >= 1.10.2',
-                        'matplotlib >= 1.3.1'],  # for readthedocs
-    extras_require = {
-        'pylab':  ['numpy >= 1.10.2',
-                   'matplotlib >= 1.3.1']
+    install_requires=[],
+    extras_require={
+        'pylab': ['numpy >= 1.10.2',
+                  'matplotlib >= 1.3.1']
     },
     # include_package_data=True,  # should work, but doesn't, I think pip does not recognize git automatically
-    package_data = {
+    package_data={
         'schlichtanders': ['*.pyx', '*pyxbld'], #include cython files
     },
     cmdclass={'clean': CleanCmd}
