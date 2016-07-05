@@ -1,6 +1,7 @@
 from types import MethodType
 from collections import defaultdict
 
+
 class Listenable(object):
     _listeners = None
     

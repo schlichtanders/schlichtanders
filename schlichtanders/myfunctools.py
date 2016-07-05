@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-from __future__ import division
+# from __future__ import division
 import inspect
 import numpy as np
 from types import FunctionType, GeneratorType
