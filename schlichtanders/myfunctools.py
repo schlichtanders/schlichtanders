@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-# from __future__ import division
+""" This module is one of my bestes, """
+from __future__ import division
 import inspect
 import numpy as np
 from types import FunctionType, GeneratorType
@@ -10,7 +11,7 @@ from itertools import izip, count
 from mygenerators import iter_args, iter_kwargs
 from schlichtanders.mycontextmanagers import until_stopped
 
-# __author__ = 'Stephan Sahm <Stephan.Sahm@gmx.de>'
+__author__ = 'Stephan Sahm <Stephan.Sahm@gmx.de>'
 
 """
 general
@@ -19,6 +20,21 @@ general
 
 
 def use_as_needed(func, kwargs, args=tuple()):
+    """ calls the given function with the subset of kwargs which is supported by the function
+
+    optionally you can also pass args
+
+    Parameters
+    ----------
+    func : function
+        to be called
+    kwargs : dict
+    args : tuple
+
+    Returns
+    -------
+    returns the output of the function
+    """
     meta = inspect.getargspec(func)
     if meta.keywords is not None:
             return func(*args, **kwargs)
@@ -35,6 +51,22 @@ as analog to fmap (see below) for type conversions
 
 
 def convert(obj, type):
+    """ converts object ``obj`` to the given type
+
+    (may converted to a subtype, e.g. for abstract types)
+    if obj is already of type type, then it is directly returned
+
+    Parameters
+    ----------
+    obj : arbitrary
+        to be converted
+    type : class
+        convert to
+
+    Returns
+    -------
+    converted object
+    """
     for (obj_type, conversion_type), conversion in convertible.iteritems():
         if issubclass(conversion_type, type) and isinstance(obj, obj_type):
             if not isinstance(obj, type):
@@ -381,6 +413,8 @@ def compose(*funcs, **kwargs):
     The composed function supports passing of kwarks arguments, where each function gets only those args, which an
     inspect on the function signature revealed.
 
+    Parameters
+    ----------
     :param funcs: functions to be concatinated. By default (func1, func2, func3) -> func1(func2(func3(...))).
     :param firstlatest: (default True)
         ===== =================================================
