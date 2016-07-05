@@ -415,8 +415,9 @@ def compose(*funcs, **kwargs):
 
     Parameters
     ----------
-    :param funcs: functions to be concatinated. By default (func1, func2, func3) -> func1(func2(func3(...))).
-    :param firstlatest: (default True)
+    funcs : function
+        functions to be concatinated. By default (func1, func2, func3) -> func1(func2(func3(...))).
+    firstlatest : bool (default True)
         ===== =================================================
         Value Effect
         ===== =================================================
@@ -424,10 +425,12 @@ def compose(*funcs, **kwargs):
         False (func1, func2, func3) -> func3(func2(func1(...)))
         ===== =================================================
 
-    :param expand_tuple: (default True)
+    expand_tuple : bool (default True)
         If True expand a return value of type tuple, so that next function is called like ``f(*tuple)``
 
-    :return: concatinated functions
+    Returns
+    -------
+    concatinated functions
     """
     firstlatest = kwargs.get("firstlatest", True)  #: python 2.7 workaround for keywords after *args
     expand_tuple = kwargs.get("expand_tuple", True)  #: python 2.7 workaround for keywords after *args
@@ -469,11 +472,16 @@ class Compose(object):
     def __init__(self, *funcs, **kwargs):
         """ Generic Compose class for functions. Use it as if this would be a higher level function.
 
-        :param funcs: functions to be concatinated. (func1, func2, func3) -> func1(func2(func3(...))).
-        :param expand_tuple: (default True)
+        Parameters
+        ----------
+        funcs : functions
+            functions to be concatinated. (func1, func2, func3) -> func1(func2(func3(...))).
+        expand_tuple : bool (default True)
             If True expand a return value of type tuple, so that next function is called like ``f(*tuple)``
 
-        :return: concatinated functions
+        Returns
+        -------
+        concatinated functions
         """
         self.expand_tuple = kwargs.get("expand_tuple", True)  #: python 2.7 workaround for keywords after *args
         if len(funcs) == 1 and isinstance(funcs[0], list):  # regarded single list of funcs as funcs itself
