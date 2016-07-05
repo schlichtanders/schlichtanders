@@ -1,9 +1,12 @@
 """ plotting helpers """
 
 from numpy import ma
+import matplotlib as mpl
 from matplotlib.colors import Normalize
 
+
 class Centre(Normalize):
+    """ a Normalizer which centers """
     def __init__(self, midpoint=0, vmin=None, vmax=None, clip=False):
         Normalize.__init__(self, vmin, vmax, clip)
         self.midpoint = midpoint
