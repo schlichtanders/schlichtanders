@@ -10,7 +10,7 @@ from itertools import izip, count
 from mygenerators import iter_args, iter_kwargs
 from schlichtanders.mycontextmanagers import until_stopped
 
-__author__ = 'Stephan Sahm <Stephan.Sahm@gmx.de>'
+# __author__ = 'Stephan Sahm <Stephan.Sahm@gmx.de>'
 
 """
 general

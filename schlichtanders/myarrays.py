@@ -3,6 +3,7 @@ import itertools as it
 from itertools import izip
 import operator as op
 
+
 def indices(array_like):
     shape = pl.shape(array_like)
     mesh = pl.meshgrid(*(pl.arange(n) for n in shape), indexing='ij') #ij indexing is like it.product
