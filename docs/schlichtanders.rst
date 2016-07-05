@@ -11,7 +11,6 @@ Submodules
 
 .. toctree::
 
-   schlichtanders.deprecated_myoptimizers
    schlichtanders.myarrays
    schlichtanders.mycontextmanagers
    schlichtanders.mydicts
