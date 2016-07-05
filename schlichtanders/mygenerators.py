@@ -182,6 +182,13 @@ def chunk(chunk_size, iterable):
         yield islice(it, chunk_size)
 
 
+def replicate(func, *args, **kwargs):
+    """ repeatedly calls the function with given args/kwargs
+
+    the name is choosen to match R replicate """
+    while True:
+        yield func(*args, **kwargs)
+
 
 def compress_idx(data, selectors):
     """

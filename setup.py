@@ -42,7 +42,7 @@ setup(
     author_email='Stephan.Sahm@gmx.de',
     license='open source',
     packages=['schlichtanders'],
-    install_requires=[],
+    install_requires=['wrapt'],
     extras_require={
         'pylab': ['numpy >= 1.10.2',
                   'matplotlib >= 1.3.1']
