@@ -1,6 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 from __future__ import division
+from .myfunctools import use_as_needed
+from itertools import chain
+from collections import Mapping
 
 __author__ = 'Stephan Sahm <Stephan.Sahm@gmx.de>'
 
@@ -29,10 +32,6 @@ def update(dict1, dict2, overwrite=True, append=True):
 
 
 # fancy remappings =)
-
-from .myfunctools import use_as_needed
-from itertools import chain
-from collections import Mapping
 
 
 class ComposedDictsView(Mapping):
