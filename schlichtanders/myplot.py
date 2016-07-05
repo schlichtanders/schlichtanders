@@ -1,5 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+""" (interactive) plotting. This should probably be merged with mymatplotlib"""
 from __future__ import division
 import numpy as np
 

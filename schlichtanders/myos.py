@@ -1,5 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+""" Felpers for the OS. Paths, files, ..."""
 from __future__ import print_function, division
 import re
 import sys, shutil, os, subprocess

@@ -1,5 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+
+""" Useful string manipulations. """
 from __future__ import division
 import re
 

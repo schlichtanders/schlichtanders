@@ -1,3 +1,7 @@
+"""
+mygenerators encompasses many useful generators in order to work with for loops and the like in a nice way.
+I can recommend all, especially ``chunk``, ``history``, ``merge`` and ``product``
+"""
 import itertools as it
 from itertools import izip, islice
 import operator

@@ -1,5 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+""" Like mygenerators, there specific often needed utilities for lists. I really like the ``as_list`` decorator for
+an empty args generator. Also, take a look at DictList.
+"""
 from __future__ import print_function, division
 from collections import MutableSequence, Mapping, Sequence
 from copy import deepcopy, copy

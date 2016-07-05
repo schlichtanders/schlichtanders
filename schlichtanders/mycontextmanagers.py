@@ -1,5 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+
+"""
+Simply but highly useful context managers.
+"""
 from __future__ import division
 import contextlib
 
@@ -8,6 +12,7 @@ __author__ = 'Stephan Sahm <Stephan.Sahm@gmx.de>'
 
 @contextlib.contextmanager
 def ignored(*exceptions):
+    """ silently ignores exceptions when raised """
     try:
         yield
     except exceptions:

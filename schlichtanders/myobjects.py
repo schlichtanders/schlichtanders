@@ -1,3 +1,6 @@
+""" Again a favourit package: Objects for everything. Namespaces, Counts, and something I am really proud of:
+``Structure``. A Structure kind of implements a mixture between dicts and nested lists, which is highly useful for
+python-like complex access to datastructures. E.g. pyparsing uses a similar interface for its ParseResult. """
 from mygenerators import deleteallbutone
 from itertools import islice
 import cPickle

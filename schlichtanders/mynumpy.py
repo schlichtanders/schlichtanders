@@ -1,5 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+
+""" Addition to myarrays. They should merged I think."""
+
 from __future__ import print_function, division
 import numpy
 import numpy as np

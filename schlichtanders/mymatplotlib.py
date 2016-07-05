@@ -1,3 +1,5 @@
+""" plotting helpers """
+
 from numpy import ma
 from matplotlib.colors import Normalize
 

@@ -1,3 +1,4 @@
+""" Add fancy features to classes. """
 from types import MethodType
 from collections import defaultdict
 

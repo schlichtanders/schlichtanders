@@ -1,3 +1,4 @@
+""" Generic wrappers around standard functions, fixing some things which are useful for my workflow.  """
 from __future__ import division
 import collections
 

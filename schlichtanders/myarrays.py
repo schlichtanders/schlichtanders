@@ -1,3 +1,6 @@
+""" Convenience method to generate specific arrays/matrices."""
+
+
 import pylab as pl
 import itertools as it
 from itertools import izip

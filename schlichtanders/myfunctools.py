@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-""" This module is one of my bestes, """
+""" This module is one of my best modules. Enjoy. """
+
 from __future__ import division
 import inspect
 import numpy as np

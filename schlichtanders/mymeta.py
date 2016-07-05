@@ -1,3 +1,9 @@
+""" This is one of my favourite packages - collecting meta implementations.
+
+Most useful is probably ``proxify``, ok, it is impressively useful here and there. But also take a look at the ``lift``
+utilities, however, they may be validly replaced with ``myfunctools.convert``.
+Enjoy.
+"""
 import abc
 from contextlib import contextmanager
 from .myfunctools import use_as_needed

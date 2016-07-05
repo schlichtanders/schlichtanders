@@ -1,5 +1,11 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+
+""" This module mainly collects dictionary subclasses, which are useful to partially modify a dict.
+But also a FrozenDict and a convenient ``update`` method for updating a dict with another, with options
+to specify overwriting/appending flags.
+"""
+
 from __future__ import division
 from .myfunctools import use_as_needed
 from itertools import chain
@@ -9,14 +15,7 @@ __author__ = 'Stephan Sahm <Stephan.Sahm@gmx.de>'
 
 
 def update(dict1, dict2, overwrite=True, append=True):
-    """ overwrites dict1 with dict2
-
-    :param dict1:
-    :param dict2:
-    :param overwrite:
-    :param append:
-    :return:
-    """
+    """ overwrites dict1 with dict2 """
     if overwrite and append:
         dict1.update(dict2)
     if overwrite and not append:
