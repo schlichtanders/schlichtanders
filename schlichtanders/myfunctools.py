@@ -8,7 +8,6 @@ from types import FunctionType, GeneratorType
 from functools import wraps, partial
 from collections import Mapping, Sequence
 from itertools import izip, count
-from mygenerators import iter_args, iter_kwargs
 from schlichtanders.mycontextmanagers import until_stopped
 
 __author__ = 'Stephan Sahm <Stephan.Sahm@gmx.de>'
