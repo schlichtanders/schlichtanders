@@ -191,6 +191,11 @@ class PassThroughDict(IdentityDict):
         )
 
 
+class HashableDict(dict):
+    def __hash__(self):
+        return id(self)
+
+
 class FrozenDict(Mapping):
     # taken from http://stackoverflow.com/questions/2703599/what-would-a-frozen-dict-be
     """ This is a hashable wrapper around a dict interface """
