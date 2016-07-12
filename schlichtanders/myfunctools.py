@@ -78,6 +78,8 @@ def convert(obj, type):
 def convert_to_list(obj):
     if obj is None:
         return []
+    if hasattr(obj, 'next'):  # only support true generators, as many objects support __iter__ but are truly objects
+        return list(obj)
     return [obj]
 
 convertible = {
@@ -188,13 +190,20 @@ class Average(object):
 
 
 def sumexp(values):
+    values = convert(values, Sequence)
     largest = reduce(np.maximum, values)
     return largest + np.log(sum(np.exp(r - largest) for r in values))
 
 
 def meanexp(values):
+    values = convert(values, Sequence)
     return sumexp(values) - np.log(len(values))
 
+
+def sumexpmap(f, *batch_args):
+    """ numerical stable version of log(sum(exp(...)) """
+    values = [f(*args) for args in izip(*batch_args)]
+    return sumexp(values)
 
 def meanexpmap(f, *batch_args):
     """ numerical stable version of log(1/n*sum(exp(...)) """
