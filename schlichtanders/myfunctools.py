@@ -360,6 +360,7 @@ def lift(f, *fmaps):
     lift is kind of function composition for fmaps, only without fancy kwargs support
     """
     fmaps = [fmap] if not fmaps else fmaps  # revert everything as we thinking in terms of function composition
+    @wraps(f)
     def single_lift(f, fmap):
         return partial(fmap, f)
     f_lifted = reduce(single_lift, fmaps, f)
@@ -389,10 +390,12 @@ def as_wrapper(*fmaps, **kwargs):
     """
     if kwargs.pop('reverse', True):
         fmaps = fmaps[::-1]  # function composition style
+
     def wrapper(f):
         return lift(f, *fmaps)
     return wrapper
 
+decorator_from_fmap = as_wrapper
 
 """
 function composition
