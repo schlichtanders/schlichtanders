@@ -179,13 +179,13 @@ class Average(object):
     def __init__(self, repeat_n_times=1):
         self.repeat_n_times = repeat_n_times
 
-    def __call__(self, f, *args):
+    def __call__(self, f, *args, **kwargs):
         if self.repeat_n_times == 1:  # usually standard case, therefore make it a bit faster
-            return f(*args)
+            return f(*args, **kwargs)
         # else, i.e. repeat_n_times > 1:
-        summed_up = f(*args)
+        summed_up = f(*args, **kwargs)
         for _ in xrange(self.repeat_n_times - 1):
-            summed_up += f(*args)
+            summed_up += f(*args, **kwargs)
         return summed_up / self.repeat_n_times
 
 
@@ -219,17 +219,17 @@ class AverageExp(object):
         self.repeat_n_times = repeat_n_times
         self.numerical_stable = numerical_stable
 
-    def __call__(self, f, *args):
+    def __call__(self, f, *args, **kwargs):
         if self.repeat_n_times == 1:  # usually standard case, therefore make it a bit faster
-            return f(*args)
+            return f(*args, **kwargs)
         # else, i.e. repeat_n_times > 1:
         if self.numerical_stable:
-            repetitions = [f(*args) for _ in xrange(self.repeat_n_times)]
+            repetitions = [f(*args, **kwargs) for _ in xrange(self.repeat_n_times)]
             return meanexp(repetitions)
         else:
-            summed_up = np.exp(f(*args))
+            summed_up = np.exp(f(*args, **kwargs))
             for _ in xrange(self.repeat_n_times - 1):
-                summed_up += np.exp(f(*args))
+                summed_up += np.exp(f(*args, **kwargs))
             return np.log(summed_up) - np.log(self.repeat_n_times)
 
 
@@ -360,7 +360,7 @@ def lift(f, *fmaps):
     lift is kind of function composition for fmaps, only without fancy kwargs support
     """
     fmaps = [fmap] if not fmaps else fmaps  # revert everything as we thinking in terms of function composition
-    @wraps(f)
+    # @wraps(f)  #this decorator seems to break code when working with theano.function or the like
     def single_lift(f, fmap):
         return partial(fmap, f)
     f_lifted = reduce(single_lift, fmaps, f)

@@ -12,6 +12,33 @@ import wrapt
 
 __author__ = 'Stephan Sahm <Stephan.Sahm@gmx.de>'
 
+
+def deflatten(flat_li, *original_li):
+    """
+    rebuilds elements of flat_li to match list structure of original_li (or tuple if given as *args)
+
+    Parameters
+    ----------
+    flat_li
+    original_li
+
+    Returns
+    -------
+    flat_li with nesting like original_li
+    """
+    if len(original_li) == 1:
+        original_li = original_li[0]
+    deflatten_li = []
+    i = 0
+    for el in original_li:
+        if isinstance(el, Sequence):
+            deflatten_li.append(flat_li[i:i+len(el)])
+            i += len(el)
+        else:
+            deflatten_li.append(flat_li[i])
+            i += 1
+    return deflatten_li
+
 @wrapt.decorator
 def return_list(wrapped, instance, args, kwargs):
     return list(wrapped(*args, **kwargs))
@@ -43,6 +70,15 @@ def getall(l, idx):
     """
     return [l[i] for i in idx]
 
+def remove(l, key=None):
+    if key is None:
+        raise ValueError("currently key needs to be given")
+    i = 0
+    while i < len(l):
+        if key(l[i]):
+            del l[i]
+        else:
+            i += 1
 
 def remove_duplicates(l):
     """ removes duplicates in place by using del call """
