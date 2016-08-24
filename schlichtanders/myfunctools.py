@@ -80,6 +80,8 @@ def convert_to_list(obj):
         return []
     if hasattr(obj, 'next'):  # only support true generators, as many objects support __iter__ but are truly objects
         return list(obj)
+    if hasattr(obj, "tolist"):
+        return obj.tolist()
     return [obj]
 
 convertible = {
@@ -95,6 +97,10 @@ map reduce fmaps
 They are mainly useful for working with numeric return types and hence not that general as the functions here.
 Still they fit well enough.
 """
+
+def fmap_singleton(f, *singleton_args):
+    args = map(lambda o: next(iter(o)), singleton_args)
+    return f(*args)
 
 
 def summap(f, *batch_args):

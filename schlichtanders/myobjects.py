@@ -22,8 +22,8 @@ Generally Helpful Objects
 class Namespace(object):
     """ simple class to use as namespace (like a struct object in Matlab) """
 
-    def __init__(self, **kwargs):
-        self.__dict__ = kwargs
+    def __init__(self, _dict=None, **kwargs):
+        self.__dict__ = kwargs if _dict is None else _dict
 
 Empty = Struct = Namespace
 

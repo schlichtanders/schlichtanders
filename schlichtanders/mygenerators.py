@@ -7,6 +7,11 @@ from itertools import izip, islice
 import operator
 import operator as op
 from timeit import default_timer
+import numpy as np
+import random
+
+from schlichtanders.myfunctools import convert
+
 inf = float("inf")
 
 
@@ -29,6 +34,12 @@ def call(funcs, *args, **kwargs):
 def run(gen):
     for _ in gen: pass
 
+
+def cycle_permute(listlike):
+    listlike = convert(listlike, list)
+    while True:
+        for i in np.random.permutation(len(listlike)):
+            yield listlike[i]
 
 
 # -------------------------
