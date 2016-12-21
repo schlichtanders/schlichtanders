@@ -9,7 +9,7 @@ to specify overwriting/appending flags.
 from __future__ import division
 from .myfunctools import use_as_needed
 from itertools import chain
-from collections import Mapping
+from collections import Mapping, defaultdict
 
 __author__ = 'Stephan Sahm <Stephan.Sahm@gmx.de>'
 
@@ -28,6 +28,10 @@ def update(dict1, dict2, overwrite=True, append=True):
                 dict1[k] = dict2[k]
     return dict1
 
+
+def recdefaultdict():
+    """ this is an awesome little trick to have a dictionary with infinitely nested default dictionaries """
+    return defaultdict(recdefaultdict)
 
 
 # fancy remappings =)
