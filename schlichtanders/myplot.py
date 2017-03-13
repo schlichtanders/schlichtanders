@@ -1,11 +1,12 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-""" (interactive) plotting. This should probably be merged with mymatplotlib"""
+""" DEPRECATED in favour of mymatplotlib.py ... (interactive) plotting. This should probably be merged with mymatplotlib"""
 from __future__ import division
 import numpy as np
 
 __author__ = 'Stephan Sahm <Stephan.Sahm@gmx.de>'
 
+# TODO DEPRECATED - REMOVE THIS PACKAGE in favour of mymatplotlib.py (everything is already copied)
 
 def plt_sync(plt_object, margin_size=0.1):
     """ updates a plot dynamically given a certain axes object (e.g. a line) """

@@ -13,7 +13,45 @@ from collections import Mapping, Sequence, MutableSet
 import types
 import weakref
 from six import string_types
+from wrapt import ObjectProxy
 
+"""
+Proxies
+=======
+"""
+
+
+class LazyProxy(ObjectProxy):
+    """ this is an amazing class which allows you to postpone the initalization of an object
+    until an attribute of it is asked for or it is called like a function """
+
+    def __init__(self, initializer, *args, **kwargs):
+        self._self_initializer = initializer
+        self._self_init_args = args
+        self._self_init_kwargs = kwargs
+
+    @property
+    def is_initialized(self):
+        try:
+            super(LazyProxy, self).__wrapped__
+            return True
+        except ValueError:
+            return False
+
+    def initialize(self):
+        super(LazyProxy, self).__init__(self._self_initializer(*self._self_init_args, **self._self_init_kwargs))
+
+    def __call__(self, *args, **kwargs):
+        if not self.is_initialized:
+            self.initialize()
+        return self.__wrapped__(*args, **kwargs)
+
+    def __getattr__(self, item):
+        if not self.is_initialized:
+            self.initialize()
+        return getattr(self.__wrapped__, item)
+
+    __repr__ = ObjectProxy.__str__
 
 """
 Generally Helpful Objects

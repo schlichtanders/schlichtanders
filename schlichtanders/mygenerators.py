@@ -42,6 +42,11 @@ def cycle_permute(listlike):
             yield listlike[i]
 
 
+def pipe_stepwise(vec, *transforms):
+    for transform in transforms:
+        vec = transform(vec)
+        yield vec
+
 # -------------------------
 
 
