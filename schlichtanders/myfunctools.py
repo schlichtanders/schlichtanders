@@ -35,8 +35,8 @@ def use_as_needed(func, kwargs, args=tuple()):
     -------
     returns the output of the function
     """
-    meta = inspect.getargspec(func)
-    if meta.keywords is not None:
+    meta = inspect.getfullargspec(func)
+    if meta.varkw is not None:
             return func(*args, **kwargs)
     else:
         # not generic super-constructor - pick only the relevant subentries:
